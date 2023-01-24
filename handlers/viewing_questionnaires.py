@@ -23,8 +23,7 @@ async def output_from_profile(self_id):
     other_id = db.find_other_profiles(self_id,
                                       db.get_data_from_profiles_table('city', self_id),
                                       db.get_data_from_profiles_table('gender', self_id))
-
-    photo = db.get_data_from_profiles_table('photo_or_video_id', other_id)
+    photo_or_video_id = db.get_data_from_profiles_table('photo_or_video_id', other_id)
 
     if db.get_data_from_profiles_table('description', other_id) == '':
         str = f"{db.get_data_from_profiles_table('user_name', other_id)}, " \
@@ -39,7 +38,12 @@ async def output_from_profile(self_id):
               f"{db.get_data_from_profiles_table('description', other_id)}.\n" \
               f"{db.get_data_from_profiles_table('dop_info', other_id)}"
 
-    await bot.send_photo(chat_id=self_id, photo=photo, caption=str, reply_markup=buttons.inline_markup)
+
+    try:
+        await bot.send_photo(chat_id=self_id, photo=photo_or_video_id, caption=str, reply_markup=buttons.inline_markup)
+
+    except:
+        await bot.send_video(chat_id=self_id,video=photo_or_video_id, caption=str, reply_markup=buttons.inline_markup)
 
 async def is_plus(callback: types.CallbackQuery):
     await CheckProfiles.check.set()

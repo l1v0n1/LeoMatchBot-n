@@ -30,39 +30,43 @@ class DataBaseWork:
                         description TEXT NOT NULL,
                         photo_or_video_id TEXT NOT NULL,
                         changes INTEGER NOT NULL,
-                        current_state TEXT NOT NULL,
-                        last_id_check INTEGER NOT NULL,
-                        is_admin BOOLEAN NOT NULL
+                        current_state TEXT NOT NULL
                     );
                 """)
 
-    # def create_table_admins(self):
-    #     with self.connector:
-    #         self.connector.execute("""
-    #                 CREATE TABLE IF NOT EXISTS admins (
-    #                     user_id INTEGER NOT NULL PRIMARY KEY,
-    #                     is_admin BOOLEAN NOT NULL
-    #                 );
-    #             """)
+    def create_admins_table(self):
+        with self.connector:
+            self.connector.execute("""
+                    CREATE TABLE IF NOT EXISTS admins (
+                        user_id INTEGER NOT NULL PRIMARY KEY,
+                        mailing_to TEXT
+                    );
+                """)
 
 
     # Добавление пользователя в таблицу "users"
-    def add_user_in_users_table(self, user_id, user_name):
+    def add_user_in_users_table(self, user_id, user_nickname):
         with self.connector:
-            self.connector.execute(f"INSERT INTO users VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
-                                   [user_id, user_name, '', -1, '', '', '', '', '', '', 0, '', 0, 0])
+            self.connector.execute(f"INSERT INTO users VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                                   [user_id, user_nickname, '', 0, '', '', '', '', '', '', 0, ''])
+
+    def add_user_in_admins_table(self, user_id):
+        with self.connector:
+            self.connector.execute(f"INSERT INTO admins VALUES(?, ?);",
+                                   [user_id, ''])
 
     # Добавление данных пользователя в таблицу "users"
-    def set_data_in_profiles_table(self, colomn_name, value, user_id):
+    def set_data_in_table(self, colomn_name, value, user_id, table_name):
         with self.connector:
             update = self.connector.execute(
-                f"UPDATE users SET {colomn_name} = ? WHERE user_id = ?", (value, user_id,))
+                f"UPDATE {table_name} SET {colomn_name} = ? WHERE user_id = ?", (value, user_id,))
 
-    # Проверка на существование пользователя в таблице "users"
-    def is_exist_user_in_db(self, user_id):
+    # Проверка на существование пользователя в таблице с названием,
+    # которое ранится в переменной "table_name"
+    def is_exist_user_in_db(self, user_id, table_name):
         try:
             with self.connector:
-                current_id = self.connector.execute(f"SELECT user_id FROM users WHERE user_id = {user_id}").fetchone()[0]
+                current_id = self.connector.execute(f"SELECT user_id FROM {table_name} WHERE user_id = {user_id}").fetchone()[0]
                 return True
         except:
             return False
@@ -70,7 +74,11 @@ class DataBaseWork:
     # Получение данных пользователя из таблицы "users"
     def get_data_from_profiles_table(self, colomn_name, user_id):
         data = self.connector.execute(f"SELECT {colomn_name} FROM users WHERE user_id = '{user_id}'")
-        return str(data.fetchone()[0])
+        return data.fetchone()[0]
+
+    def get_data_from_admins_table(self, colomn_name, user_id):
+        data = self.connector.execute(f"SELECT {colomn_name} FROM admins WHERE user_id = '{user_id}'")
+        return data.fetchone()[0]
 
     # Получение id другого пользователя по схожим параметрам: "город" и "кто нравится"
     def find_other_profiles(self, self_id, self_city, self_gender):
@@ -96,4 +104,38 @@ class DataBaseWork:
                 if current_other_id != self_id:
                     return current_other_id
 
+    # Получение id всех пользователей
+    def get_all_users_id(self):
+        all_id = self.connector.execute("SELECT * FROM users").fetchall()
+
+        list_all_id = []
+
+        for i in range(len(all_id)):
+            list_all_id.append(int(all_id[i][0]))
+
+        return list_all_id
+
+    # Получение id всех пользователей, исходя из заданного ограничения по полу
+    def get_all_specific_users_id(self, gender):
+        if gender == 'Девушкам':
+            gender = 'Я девушка'
+        elif gender == 'Парням':
+            gender = 'Я парень'
+
+        list_all_specific_users_id = []
+
+        all_specific_users_id = self.connector.execute(
+            f"SELECT user_id FROM users WHERE gender = '{gender}'").fetchall()
+
+        for i in range(len(all_specific_users_id)):
+            list_all_specific_users_id.append(int(all_specific_users_id[i][0]))
+
+        return list_all_specific_users_id
+
 db = DataBaseWork()
+
+# if __name__ == '__main__':
+#     db = DataBaseWork()
+#     db.create_db()
+#     db.create_table_users()
+#     print(db.get_all_specific_users_id('Девушкам'))
