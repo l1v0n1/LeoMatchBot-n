@@ -25,7 +25,6 @@ async def command_start(message: types.Message):
                          ' Здесь ты познакомишься с любителями корейской культуры и, возможно,'
                          ' найдешь свою родственную душу с такими же интересами!')
 
-    # await asyncio.sleep(5)
     if db.is_exist_user_in_db(message.from_user.id, 'admins') == False:
         db.add_user_in_users_table(message.from_user.id, message.from_user.first_name)
         await message.answer('Давай заполним твой профиль и пойдем знакомиться с другими участниками.')

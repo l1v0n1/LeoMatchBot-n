@@ -63,3 +63,5 @@ settings_admin_menu.add(KeyboardButton('Разблокировать польз�
 settings_admin_menu.add(KeyboardButton('Назад'))
 
 '''***** Кнопки для меню администратора (Аналитика)*****'''
+inline_excel = InlineKeyboardButton(text='Выгрузить Excel файл', callback_data='output_excel')
+inline_markup_excel = InlineKeyboardMarkup(row_width=1).add(inline_excel)

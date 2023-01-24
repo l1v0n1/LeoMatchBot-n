@@ -4,8 +4,12 @@
 import sqlite3
 import difflib
 import random
+import pandas
+import openpyxl
 
 # Класс, в котором описаны методы взаимодействия с базой данных "LeoMarchBot"
+import pandas as pd
+
 class DataBaseWork:
     connector = ''
 
@@ -43,11 +47,19 @@ class DataBaseWork:
                     );
                 """)
 
+    # def create_violators_table(self):
+    #     with self.connector:
+    #         self.connector.execute("""
+    #                 CREATE TABLE IF NOT EXISTS violators (
+    #                     user_id INTEGER NOT NULL PRIMARY KEY,
+    #                     status TEXT
+    #                 );
+    #             """)
 
     # Добавление пользователя в таблицу "users"
     def add_user_in_users_table(self, user_id, user_nickname):
         with self.connector:
-            self.connector.execute(f"INSERT INTO users VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+            self.connector.execute(f"INSERT INTO users VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
                                    [user_id, user_nickname, '', 0, '', '', '', '', '', '', 0, ''])
 
     def add_user_in_admins_table(self, user_id):
@@ -131,6 +143,11 @@ class DataBaseWork:
             list_all_specific_users_id.append(int(all_specific_users_id[i][0]))
 
         return list_all_specific_users_id
+
+    def read_sql_to_frame(self):
+        con = sqlite3.connect('KTinder.db')
+        df = pd.read_sql_query("SELECT * FROM users", con)
+        df.to_excel('Статистика.xlsx')
 
 db = DataBaseWork()
 
