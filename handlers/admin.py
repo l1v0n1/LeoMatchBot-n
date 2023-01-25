@@ -19,6 +19,9 @@ class AdminStates(StatesGroup):
 
     settings = State()
     settings_change = State()
+    settings_warn = State()
+    settings_block = State()
+    settings_unblock = State()
 
     analytics = State()
 
@@ -122,13 +125,91 @@ async def mailing_to_specific_subscribers_handler(message: types.Message):
 '''******************************************************************************************************************'''
 async def settings_handler(message: types.Message):
     if message.text == 'Предупредить':
+        try:
+            db.set_data_in_table('violators_id', db.get_violator_user_id(), message.from_user.id, 'admins')
+
+            await output_from_profile(message.from_user.id, db.get_data_from_admins_table(
+                'violators_id', message.from_user.id))
+
+            await AdminStates.settings_warn.set()
+            await message.answer('На эту анкету поступило ? жалоб!\n'
+                                 'Выберите действие:', reply_markup=buttons.settings_warn)
+        except:
+            await message.answer('Нарушителей не найдено!')
+            await admin_menu_module(message)
+
+    elif message.text == 'Заблокировать':
         pass
-    if message.text == 'Заблокировать':
+    elif message.text == 'Разблокировать пользователя':
         pass
-    if message.text == 'Разблокировать пользователя':
-        pass
-    if message.text == 'Назад':
-        pass
+    elif message.text == 'Назад':
+        await admin_menu_module(message)
+    else:
+        await message.answer('Нет такого варианта!')
+
+
+async def warn(message: types.Message):
+    if message.text == 'Предупредить':
+        try:
+            await bot.send_message(db.get_data_from_admins_table('violators_id', message.from_user.id),
+                               'Вам пришло предупреждение от Администратора!\n'
+                               'Следующее предупреждение - бан!')
+            db.set_data_in_table(
+                'status', 'Предупрежден', db.get_data_from_admins_table('violators_id', message.from_user.id),
+                'violators')
+
+            db.set_data_in_table('number_of_complaints', 0, message.from_user.id, 'violators')
+
+            await AdminStates.settings.set()
+            await message.answer('Выберите то, что хотите сделать:', reply_markup=buttons.settings_admin_menu)
+        except:
+            pass
+
+
+    # elif message.text == 'Помиловать':
+    #     db.delete_user_from_violators_table(db.get_data_from_admins_table('violators_id', message.from_user.id))
+    #     await message.answer('Пользователь помилован!')
+    #
+    #     await AdminStates.settings.set()
+    #     await message.answer('Выберите то, что хотите сделать:', reply_markup=buttons.settings_admin_menu)
+
+    elif message.text == 'Отмена':
+        await AdminStates.settings.set()
+        await message.answer('Выберите то, что хотите сделать:', reply_markup=buttons.settings_admin_menu)
+    else:
+        await message.answer('Нет такого варианта!')
+
+async def block(message: types.Message):
+    pass
+
+async def unblock(message: types.Message):
+    pass
+
+
+
+
+async def output_from_profile(self_id, violator_id):
+    photo_or_video_id = db.get_data_from_profiles_table('photo_or_video_id', violator_id)
+
+    if db.get_data_from_profiles_table('description', violator_id) == '':
+        str = f"{db.get_data_from_profiles_table('user_name', violator_id)}, " \
+              f"{db.get_data_from_profiles_table('age', violator_id)}, " \
+              f"{db.get_data_from_profiles_table('city', violator_id)}." \
+              f"{db.get_data_from_profiles_table('dop_info', violator_id)}"
+
+    else:
+        str = f"{db.get_data_from_profiles_table('user_name', violator_id)}, " \
+              f"{db.get_data_from_profiles_table('age', violator_id)}, " \
+              f"{db.get_data_from_profiles_table('city', violator_id)} - " \
+              f"{db.get_data_from_profiles_table('description', violator_id)}.\n" \
+              f"{db.get_data_from_profiles_table('dop_info', violator_id)}"
+
+
+    try:
+        await bot.send_photo(chat_id=self_id, photo=photo_or_video_id, caption=str)
+
+    except:
+        await bot.send_video(chat_id=self_id,video=photo_or_video_id, caption=str)
 '''******************************************************************************************************************'''
 
 '''*** Функциональный блок "Аналитика" ***'''
@@ -154,6 +235,7 @@ async def analytics(msg):
 async def is_output_excel(callback: types.CallbackQuery):
     await callback.message.edit_reply_markup()
     await callback.message.answer_document(open('Статистика.xlsx', 'rb'))
+    await admin_menu_module(callback.message)
 '''******************************************************************************************************************'''
 
 # Функция регистрации хэндлеров файла "admins.py"
@@ -166,5 +248,8 @@ def reg_handlers_questionnaire(dp: Dispatcher):
     dp.register_message_handler(mailing_to_specific_subscribers_handler, state=AdminStates.mailing_to_specific_subscribers)
 
     dp.register_message_handler(settings_handler, state=AdminStates.settings)
+    dp.register_message_handler(warn, state=AdminStates.settings_warn)
+    dp.register_message_handler(block, state=AdminStates.settings_block)
+    dp.register_message_handler(unblock, state=AdminStates.settings_unblock)
 
     dp.register_callback_query_handler(is_output_excel, Text('output_excel'), state=AdminStates.analytics)
