@@ -57,5 +57,5 @@ async def change_mode_handler(message: types.Message):
             await message.answer('Нет такого варианта ответа!')
 
 def reg_handlers_change_mode(dp: Dispatcher):
-    dp.register_message_handler(change_mode_handler, state=ChangeMode)
+    dp.register_message_handler(change_mode_handler, state=ChangeMode.mode)
 

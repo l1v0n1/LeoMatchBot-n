@@ -1,3 +1,5 @@
-aiogram
-pandas
-openpyxl
+aiogram==2.25.1
+pandas==2.0.0
+openpyxl==3.1.2
+python-dotenv==1.0.0
+asyncio==3.4.3

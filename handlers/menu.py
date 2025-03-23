@@ -15,7 +15,7 @@ async def menu_handler(message: types.Message):
 
 async def menu_module(msg):
     if DataBaseWork().is_user_blocked(msg.from_user.id) == False:
-        if msg.text == '🫰🏼Найти друга':
+        if msg.text == 'Найти друга':
             await viewing_questionnaires.start_check_profiles(msg)
 
         elif msg.text == '👤 Мой профиль':
@@ -39,7 +39,7 @@ async def menu_module(msg):
                                  'Рад был с тобой пообщаться, будет скучно 😥\n'
                                  '\n'
                                  'Но **ТЫ** всегда можешь вернуться 🥳\n'
-                                 'Жми __**🫰🏼Найти друга**__ и вперед🫰', parse_mode=types.ParseMode.MARKDOWN_V2,
+                                 'Жми __**Найти друга**__ и вперед', parse_mode=types.ParseMode.MARKDOWN_V2,
                                  reply_markup=buttons.menu_admin_close)
             else:
                 await msg.answer('\n🫶Надеюсь, что ты отлично провел время и нашел родственную душу благодаря мне\!\n'
@@ -48,16 +48,29 @@ async def menu_module(msg):
                                  'Рад был с тобой пообщаться, будет скучно 😥\n'
                                  '\n'
                                  'Но **ТЫ** всегда можешь вернуться 🥳\n'
-                                 'Жми __**🫰🏼Найти друга**__ и вперед🫰', parse_mode=types.ParseMode.MARKDOWN_V2,
+                                 'Жми __**Найти друга**__ и вперед', parse_mode=types.ParseMode.MARKDOWN_V2,
                                  reply_markup=buttons.menu_close)
 
-        if DataBaseWork().is_exist_user_in_db(msg.from_user.id, 'admins') == True:
-            if msg.text == 'Выбор режима':
+        elif msg.text == 'Выбор режима':
+            print(DataBaseWork().is_exist_user_in_db(msg.from_user.id, 'admins'))
+            if DataBaseWork().is_exist_user_in_db(msg.from_user.id, 'admins') == True:
                 await change_mode.change_mode_module(msg)
+            else:
+                # For non-admin users who somehow access this button
+                if DataBaseWork().is_exist_user_in_db(msg.from_user.id, 'admins') == True:
+                    await msg.answer('У вас нет доступа к этой функции', reply_markup=buttons.menu_admin)
+                else:
+                    await msg.answer('У вас нет доступа к этой функции', reply_markup=buttons.menu)
 
 
 def reg_menu_handlers(dp: Dispatcher):
     dp.register_message_handler(menu_handler, state=MenuState.menu)
+    
+    # Register the handler for common menu commands on all states
+    dp.register_message_handler(menu_handler, lambda message: message.text in 
+                               ['Найти друга', '👤 Мой профиль', 'Выбор режима', 
+                                '⛔ Скрыть анкету', '⛑ Проблема с ботом'], 
+                               state="*")
 
 
 

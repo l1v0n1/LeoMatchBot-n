@@ -122,7 +122,7 @@ class DataBaseWork:
         con.execute("""
                 CREATE TABLE IF NOT EXISTS violators (
                     user_id INTEGER NOT NULL PRIMARY KEY,
-                    status TEXT,
+                    status TEXT NOT NULL,
                     number_of_complaints INTEGER
                 );
             """)
@@ -142,7 +142,7 @@ class DataBaseWork:
     def add_user_in_admins_table(self, user_id):
         con = self.create_db()
 
-        con.execute(f"INSERT INTO admins VALUES(?, ?, ?, ?, ?);",
+        con.execute(f"INSERT INTO admins VALUES(?, ?, ?, ?, ?, ?);",
                                [user_id, None, None, None, None, '-1'])
         con.commit()
 
@@ -151,13 +151,20 @@ class DataBaseWork:
         con = self.create_db()
 
         try:
-            add_user = con.execute(f"INSERT INTO violators VALUES(?, ?, ?, ?);",
-                                   [user_id, 'void', False, 1])
+            add_user = con.execute(f"INSERT INTO violators VALUES(?, ?, ?);",
+                                   [user_id, 'void', 1])
         except:
-            value = con.execute(f"SELECT number_of_complaints FROM violators WHERE user_id = {user_id}").fetchone()[0]
-
-            update = con.execute(
-                f"UPDATE violators SET number_of_complaints = ? WHERE user_id = ?", (int(value)+1, user_id,))
+            try:
+                value = con.execute(f"SELECT number_of_complaints FROM violators WHERE user_id = {user_id}").fetchone()
+                if value is not None:
+                    update = con.execute(
+                        f"UPDATE violators SET number_of_complaints = ? WHERE user_id = ?", (int(value[0])+1, user_id,))
+                else:
+                    # If user doesn't exist, create a new entry
+                    add_user = con.execute(f"INSERT INTO violators VALUES(?, ?, ?);",
+                                           [user_id, 'void', 1])
+            except Exception as e:
+                print(f"Error in add_user_in_violators_table: {e}")
 
         con.commit()
 
@@ -197,11 +204,14 @@ class DataBaseWork:
         con = self.create_db()
 
         data = con.execute(
-            f"SELECT {column_name} FROM violators WHERE user_id = {violator_id}").fetchone()[0]
+            f"SELECT {column_name} FROM violators WHERE user_id = {violator_id}")
 
         con.commit()
-
-        return data
+        
+        result = data.fetchone()
+        if result is None:
+            return None
+        return result[0]
 
     def get_violator_id(self, status):
         con = self.create_db()
@@ -292,19 +302,25 @@ class DataBaseWork:
         con = self.create_db()
 
         data = con.execute(f"SELECT {colomn_name} FROM users WHERE user_id = '{user_id}'")
-
+        
         con.commit()
-
-        return data.fetchone()[0]
+        
+        result = data.fetchone()
+        if result is None:
+            return None
+        return result[0]
 
     def get_data_from_admins_table(self, colomn_name, user_id):
         con = self.create_db()
 
         data = con.execute(f"SELECT {colomn_name} FROM admins WHERE user_id = '{user_id}'")
-
+        
         con.commit()
-
-        return data.fetchone()[0]
+        
+        result = data.fetchone()
+        if result is None:
+            return None
+        return result[0]
 
     # Получение id другого пользователя по схожим параметрам: "город" и "кто нравится"
     def find_other_profiles(self, self_id, self_city, self_opposite):
@@ -367,7 +383,11 @@ class DataBaseWork:
 
         con.commit()
 
-        return len(all_id)
+        list_all_users_id = []
+        for i in range(len(all_id)):
+            list_all_users_id.append(int(all_id[i][0]))
+
+        return list_all_users_id
 
     def update_match_id(self, self__id, other_id):
         last_value = self.get_data_from_profiles_table('match_id', other_id)

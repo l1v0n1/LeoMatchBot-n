@@ -27,22 +27,22 @@ numbers.row(KeyboardButton('7 🚀'))
 
 '''***** Кнопки для меню обычного пользователя после заполнения анкеты*****'''
 menu = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-menu.row(KeyboardButton('🫰🏼Найти друга'), KeyboardButton('👤 Мой профиль'))
+menu.row(KeyboardButton('Найти друга'), KeyboardButton('👤 Мой профиль'))
 menu.row(KeyboardButton('⛔ Скрыть анкету'), KeyboardButton('⛑ Проблема с ботом'))
 
 menu_close = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-menu_close.row(KeyboardButton('🫰🏼Найти друга'), KeyboardButton('👤 Мой профиль'))
+menu_close.row(KeyboardButton('Найти друга'), KeyboardButton('👤 Мой профиль'))
 menu_close.add(KeyboardButton('⛑ Проблема с ботом'))
 
 
 '''***** Кнопки для администратора после заполнения/оценки анкеты*****'''
 menu_admin = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-menu_admin.row(KeyboardButton('🫰🏼Найти друга'), KeyboardButton('👤 Мой профиль'))
+menu_admin.row(KeyboardButton('Найти друга'), KeyboardButton('👤 Мой профиль'))
 menu_admin.add(KeyboardButton('⛔ Скрыть анкету'), KeyboardButton('⛑ Проблема с ботом'))
 menu_admin.add(KeyboardButton('Выбор режима'))
 
 menu_admin_close = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-menu_admin_close.row(KeyboardButton('🫰🏼Найти друга'), KeyboardButton('👤 Мой профиль'))
+menu_admin_close.row(KeyboardButton('Найти друга'), KeyboardButton('👤 Мой профиль'))
 menu_admin_close.add(KeyboardButton('⛑ Проблема с ботом'))
 menu_admin_close.add(KeyboardButton('Выбор режима'))
 

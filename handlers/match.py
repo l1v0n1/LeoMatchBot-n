@@ -19,30 +19,40 @@ async def send_notification_about_matching_handler(message: types.Message):
 async def send_notification_about_matching_module(msg):
     if DataBaseWork().is_user_blocked(msg.from_user.id) == False:
         who_liked_me_id = DataBaseWork().get_data_from_profiles_table('match_id', msg.from_user.id)
+        
+        # If no matches found, go to profile viewing
+        if who_liked_me_id is None or who_liked_me_id == '-1':
+            return await viewing_questionnaires.start_check_profiles(msg)
 
+        # Check each match
+        filtered_ids = []
         for el in who_liked_me_id.split():
             print(el, type(el))
-            if DataBaseWork().get_data_from_profiles_table('photo_or_video_id', el) == '':
-                if len(who_liked_me_id.split()) == 1:
-                    who_liked_me_id = -1
-                    DataBaseWork().set_data_in_table('match_id', who_liked_me_id, msg.from_user.id, 'users')
-                    return await viewing_questionnaires.start_check_profiles(msg)
-
-                elif len(who_liked_me_id.split()) > 1:
-                    index = who_liked_me_id.index(' ')
-                    who_liked_me_id = who_liked_me_id[index + 1:]
-                    DataBaseWork().set_data_in_table('match_id', who_liked_me_id, msg.from_user.id, 'users')
+            photo_id = DataBaseWork().get_data_from_profiles_table('photo_or_video_id', el)
+            if photo_id is None or photo_id == '':
+                # Skip this match, but keep processing others
+                continue
+            filtered_ids.append(el)
+        
+        # If all matches were invalid, reset and go to profile viewing
+        if not filtered_ids:
+            DataBaseWork().set_data_in_table('match_id', '-1', msg.from_user.id, 'users')
+            return await viewing_questionnaires.start_check_profiles(msg)
+        
+        # Update the match list with valid matches only
+        new_who_liked_me_id = ' '.join(filtered_ids)
+        DataBaseWork().set_data_in_table('match_id', new_who_liked_me_id, msg.from_user.id, 'users')
 
         try:
             DataBaseWork().set_data_in_table('is_matched', True, msg.from_user.id, 'users')
 
             await bot.send_message(chat_id=msg.from_user.id,
-                                   text=f'Вы понравились {len(who_liked_me_id.split())} '
+                                   text=f'Вы понравились {len(filtered_ids)} '
                                         f'пользователю(-ям)!\nПосмотреть анкету(-ы)?',
                                    reply_markup=buttons.da_net)
             await Match.yes_no.set()
-        except:
-            print(f'Исключение в match.py для юзера с id = {msg.from_user.id}')
+        except Exception as e:
+            print(f'Исключение в match.py для юзера с id = {msg.from_user.id}: {e}')
 
 # Обработчик кнопок "да" и "нет", которые выводятся с сообщением "Вы понравились пользователю!
 # Посмотреть анкету?"
@@ -66,7 +76,7 @@ async def yes_no_match(callback: types.CallbackQuery):
 
 async def is_menu(message: types.Message):
     if DataBaseWork().is_user_blocked(message.from_user.id) == False:
-        if message.text in ['🫰🏼Найти друга', '👤 Мой профиль', 'Выбор режима','⛔ Скрыть анкету']:
+        if message.text in ['Найти друга', '👤 Мой профиль', 'Выбор режима', '⛔ Скрыть анкету', '⛑ Проблема с ботом']:
             await menu.menu_module(message)
         elif message.text == '/start':
             await start_bot.command_start_module(message)

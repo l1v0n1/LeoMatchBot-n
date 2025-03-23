@@ -27,18 +27,17 @@ async def command_start_module(msg):
                                      'в настройках Telegram после чего нажать\n'
                                      '/start')
 
-                await bot.send_photo(chat_id=msg.from_user.id,
-                                     photo='AgACAgIAAxkBAAMGY9Z6dOyfyJdbmI09Bcv9RaKpoLQAAvPEMRtpIrBKOIZmG3Iqn9cBAAMCAANzAAMtBA',
-                                     caption='IOS\n\n'
+                
+                await bot.send_message(chat_id=msg.from_user.id,
+                                       text='IOS\n\n'
                                              '1. Нажмите ⚙️Настройки в правом нижнем углу\n'
                                              '2. Нажмите "Выбрать имя пользователя"\n'
-                                             '3. Введите имя пользователя')
-                await bot.send_photo(chat_id=msg.from_user.id,
-                                     photo='AgACAgIAAxkBAAMFY9Z6XwceJQUsZWmf4o6uLl-c-SIAAvHEMRtpIrBKWONeyvTHVCwBAAMCAANzAAMtBA',
-                                     caption='Android\n\n'
+                                             '3. Введите имя пользователя\n\n'
+                                             'Android\n\n'
                                              '1. Нажмите на 3 полоски в левом верхнем углу\n'
                                              '2. Нажмите ⚙️Настройки\n'
                                              '3. Нажмите на "Имя пользователя" и введите имя')
+
             else:
                 DataBaseWork().add_user_in_users_table(msg.from_user.id, msg.from_user.username)
                 await create_questionnaire.start_myprofile_module(msg)
@@ -54,17 +53,10 @@ async def command_start_module(msg):
 # хендлер вернет его в command_start_module(msg)
 @dp.message_handler()
 async def arbitrary_start(message: types.Message):
-    if message.from_user.id not in [817688918, 693852768]:
-        await bot.send_message(chat_id=message.from_user.id, text='Бот временно не работает! '
-                                                              'Ведутся технические работы, скоро все заработает! 😉')
-        print(message.from_user.id, ':', message.text, type(message.from_user.id))
-        await StartStates.sleep.set()
-    else:
-        print('hui')
-        await message.answer('Добро пожаловать в чат-бот «Чингу🫰🏼 ~»\n'
-                             ' Здесь ты познакомишься с любителями корейской культуры и, возможно,'
-                             ' найдешь свою родственную душу с такими же интересами!')
-        await command_start_module(message)
+    await message.answer('Добро пожаловать в чат-бот для знакомств!\n'
+                        'Здесь ты познакомишься с интересными людьми и, возможно,'
+                        ' найдешь свою вторую половинку!')
+    await command_start_module(message)
 
 # Проверка активных пользователей
 async def check_activity():
@@ -97,6 +89,13 @@ if __name__ == '__main__':
     DataBaseWork().create_table_users()
     DataBaseWork().create_admins_table()
     DataBaseWork().create_violators_table()
+    
+    # Initialize admins from config
+    import config
+    for admin_id in config.admin_id:
+        if not DataBaseWork().is_exist_user_in_db(admin_id, 'admins'):
+            print(f"Adding admin with ID {admin_id} to the database")
+            DataBaseWork().add_user_in_admins_table(admin_id)
 
     change_mode.reg_handlers_change_mode(dp=dp)
     viewing_questionnaires.reg_handlers_questionnaire(dp=dp)
